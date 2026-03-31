@@ -278,6 +278,68 @@ export async function getEvents() {
 }
 
 // =========================================================================
+// 3. БЮДЖЕТ
+// =========================================================================
+
+const MOCK_BUDGET = {
+  totalBudget: 20000,
+  guestCount: 12,
+  items: [
+    { id: 1, name: 'Напитки', qty: 1, pricePerUnit: 200, totalPrice: 2000 },
+    { id: 2, name: 'Еда', qty: 1, pricePerUnit: 500, totalPrice: 6000 },
+    { id: 3, name: 'Декор', qty: 1, pricePerUnit: 300, totalPrice: 3600 },
+    { id: 4, name: 'Музыка', qty: 1, pricePerUnit: 150, totalPrice: 1500 },
+  ]
+};
+
+export async function getBudgetItems(eventId) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const stored = localStorage.getItem(`budget_${eventId}`);
+      resolve(stored ? JSON.parse(stored) : { ...MOCK_BUDGET });
+    }, 600);
+  });
+}
+
+export async function addBudgetItem(eventId, item) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const stored = localStorage.getItem(`budget_${eventId}`);
+      const budget = stored ? JSON.parse(stored) : { ...MOCK_BUDGET };
+      const newItem = { ...item, id: Date.now() };
+      budget.items = [...budget.items, newItem];
+      localStorage.setItem(`budget_${eventId}`, JSON.stringify(budget));
+      resolve({ success: true, item: newItem });
+    }, 500);
+  });
+}
+
+export async function deleteBudgetItem(eventId, itemId) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const stored = localStorage.getItem(`budget_${eventId}`);
+      const budget = stored ? JSON.parse(stored) : { ...MOCK_BUDGET };
+      budget.items = budget.items.filter((i) => i.id !== itemId);
+      localStorage.setItem(`budget_${eventId}`, JSON.stringify(budget));
+      resolve({ success: true });
+    }, 400);
+  });
+}
+
+export async function updateBudgetSettings(eventId, totalBudget, guestCount) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const stored = localStorage.getItem(`budget_${eventId}`);
+      const budget = stored ? JSON.parse(stored) : { ...MOCK_BUDGET };
+      budget.totalBudget = totalBudget;
+      budget.guestCount = guestCount;
+      localStorage.setItem(`budget_${eventId}`, JSON.stringify(budget));
+      resolve({ success: true });
+    }, 400);
+  });
+}
+
+// =========================================================================
 // СЛУЖЕБНЫЕ ФУНКЦИИ
 // =========================================================================
 

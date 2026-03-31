@@ -1,7 +1,8 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import CreateEventPage from './pages/CreateEventPage';
-import AuthPage from './pages/AuthPage'; // Импортируем нашу новую страницу
+import AuthPage from './pages/AuthPage';
+import EventPage from './pages/EventPage';
 
 export default function App() {
   return (
@@ -16,6 +17,9 @@ export default function App() {
           
           {/* Роут для создания мероприятия (наш чат) */}
           <Route path="/create" element={<CreateEventPage />} />
+
+          {/* Роут для управления мероприятием (вкладки) */}
+          <Route path="/event" element={<EventPage />} />
           
           <Route 
             path="*" 
