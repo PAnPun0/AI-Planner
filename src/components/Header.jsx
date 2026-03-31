@@ -1,13 +1,17 @@
-
+// src/components/Header.jsx
 export function Header({ title, progress = 0 }) {
   return (
-    <div className="relative w-full bg-[#BFD1FF] rounded-lg overflow-hidden py-6 text-center mb-8">
-      <h1 className="text-2xl font-medium text-slate-800">{title}</h1>
-      {/* Полоска прогресса */}
-      <div 
-        className="absolute bottom-0 left-0 h-[6px] bg-[#1028D3] transition-all duration-500" 
-        style={{ width: `${progress}%` }}
-      />
+    <div className="w-full flex flex-col items-center py-6 mb-4 sticky top-0 z-10">
+      <h1 className="text-2xl font-medium text-slate-900 mb-6">{title}</h1>
+      
+      {/* Контейнер прогресс-бара */}
+      <div className="w-full h-[6px] bg-[#D6E4FF] rounded-full overflow-hidden">
+        {/* Заполненная часть */}
+        <div 
+          className="h-full bg-[#1028D3] transition-all duration-700 ease-out rounded-full" 
+          style={{ width: `${progress}%` }}
+        />
+      </div>
     </div>
   );
 }

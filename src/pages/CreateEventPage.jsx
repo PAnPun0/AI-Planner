@@ -1,89 +1,91 @@
 // src/pages/CreateEventPage.jsx
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { BotMessage, UserMessage } from '../components/Message';
 import { ChatInput } from '../components/ChatInput';
-import { EventDateModal } from '../components/EventDateModal'; // Импортируем наше окно
+import { EventDateModal } from '../components/EventDateModal';
+import CreateEventBG from '../assets/CreateEventBG.png';
 
 export default function CreateEventPage() {
-  // Состояние для управления видимостью модального окна
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  const[messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'bot',
-      text: 'Что ты хочешь организовать?',
-    },
-    {
-      id: 2,
-      sender: 'user',
-      text: "Hey there! I'm super excited to celebrate my birthday, and I want you to join me for a day filled with joy, laughter, and unforgettable moments!",
-    },
-    {
-      id: 3,
-      sender: 'bot',
-      text: 'На какую дату планируется мероприятие?',
-      buttons: ['Выбрать дату', 'Пока неизвестно'],
-    }
+  // Обновил начальный массив сообщений, чтобы он в точности повторял твой скриншот
+  const [messages, setMessages] = useState([
+    { id: 1, sender: 'bot', text: 'Что ты хочешь организовать?' },
+    { id: 2, sender: 'user', text: "Hey there! I'm super excited to celebrate my birthday, and I want you to join me for a day filled with joy, laughter, and unforgettable moments!" },
+    { id: 3, sender: 'bot', text: 'На какую дату планируется мероприятие?', buttons:['Выбрать дату', 'Пока неизвестно'] },
+    { id: 4, sender: 'bot', text: 'Хорошо, мероприятие запланировано на 24 января 2026 года. Кого вы хотите пригласить?', buttons: ['Выбрать тип гостей'] }
   ]);
 
+  // Вычисляем прогресс на основе количества шагов/сообщений
+  // Предположим, что полный опрос занимает около 8 сообщений (100%)
+  const currentProgress = Math.min(100, (messages.length / 8) * 100);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const handleUserMessage = (text) => {
-    const newMessage = {
-      id: Date.now(),
-      sender: 'user',
-      text: text,
-    };
+    const userMsg = { id: Date.now(), sender: 'user', text: text };
+    setMessages((prev) =>[...prev, userMsg]);
     
-    // Добавляем сообщение пользователя в чат
-    setMessages((prev) => [...prev, newMessage]);
+    // Здесь в будущем будет вызов твоего API (бэкенда)
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-blue-50 flex flex-col items-center p-4 font-sans relative">
+    <div className="min-h-screen flex flex-col items-center p-4 font-sans relative" style={{ backgroundImage: `url(${CreateEventBG})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       
-      <div className="w-full max-w-4xl flex flex-col flex-1 pb-6 pt-10">
+      {/* Правая часть с контентом */}
+      <div className="w-full max-w-4xl flex flex-col flex-1 pb-4 pt-6">
         
-        <Header title="Создание мероприятия" progress={40} />
+        {/* Передаем вычисленный прогресс в шапку */}
+        <Header title="Создание мероприятия" progress={currentProgress} />
         
         <div className="flex-1 overflow-y-auto flex flex-col w-full mt-4 pb-4 px-2">
           {messages.map((msg) => {
             if (msg.sender === 'bot') {
               return (
                 <BotMessage key={msg.id} text={msg.text}>
-                  {msg.buttons && msg.buttons.includes('Выбрать дату') && (
-                    <>
-                      {/* При клике на кнопку открываем модалку */}
-                      <button 
-                        onClick={() => setIsModalOpen(true)}
-                        className="px-6 py-2.5 bg-[#C6DDFB] border border-[#92BFFF] text-[#1028D3] rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
-                      >
-                        Выбрать дату
+                  {msg.buttons && msg.buttons.map((btnName, index) => {
+                    
+                    // Стилизация для главной кнопки
+                    if (btnName === 'Выбрать дату') {
+                      return (
+                        <button key={index} onClick={() => setIsModalOpen(true)} className="px-6 py-2.5 bg-[#C6DDFB] border border-[#92BFFF] text-[#1028D3] rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">
+                          {btnName}
+                        </button>
+                      );
+                    }
+                    
+                    // Стилизация для второстепенных кнопок из нового дизайна
+                    return (
+                      <button key={index} onClick={() => handleUserMessage(btnName)} className="px-6 py-2.5 bg-[#E4EFFF] text-slate-800 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
+                        {btnName}
                       </button>
-                      <button 
-                        onClick={() => handleUserMessage("Пока неизвестно")}
-                        className="px-6 py-2.5 bg-white border border-gray-200 text-slate-800 rounded-lg text-sm font-medium shadow-sm hover:bg-gray-50 transition-colors"
-                      >
-                        Пока неизвестно
-                      </button>
-                    </>
-                  )}
+                    );
+                  })}
                 </BotMessage>
               );
             }
 
             if (msg.sender === 'user') {
-              return <UserMessage key={msg.id} text={msg.text} className="whitespace-pre-wrap" />;
+              return <UserMessage key={msg.id} text={msg.text} />;
             }
 
             return null;
           })}
+          
+          <div ref={messagesEndRef} />
         </div>
 
         <ChatInput onSendMessage={handleUserMessage} />
       </div>
       
-      {/* Рендерим модальное окно поверх всего */}
       <EventDateModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

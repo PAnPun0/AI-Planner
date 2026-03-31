@@ -1,28 +1,22 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import CreateEventPage from './pages/CreateEventPage';
+import AuthPage from './pages/AuthPage'; // Импортируем нашу новую страницу
 
 export default function App() {
   return (
-    // BrowserRouter оборачивает все приложение для работы навигации
     <BrowserRouter>
-      {/* Контейнер для общих стилей приложения (на всякий случай) */}
       <div className="w-full min-h-screen font-sans text-slate-900 bg-white">
-        
         <Routes>
-          {/* Редирект с главной страницы на страницу создания, пока нет дашборда */}
-          <Route path="/" element={<Navigate to="/create" replace />} />
+          {/* Теперь стартовой страницей будет Авторизация */}
+          <Route path="/" element={<Navigate to="/auth" replace />} />
           
-          {/* Наша сверстанная страница */}
+          {/* Роут для Входа / Регистрации */}
+          <Route path="/auth" element={<AuthPage />} />
+          
+          {/* Роут для создания мероприятия (наш чат) */}
           <Route path="/create" element={<CreateEventPage />} />
-
-          {/* 
-            Задел на будущее для других страниц хакатона:
-            <Route path="/events" element={<EventsListPage />} />
-            <Route path="/event/:id" element={<EventDashboardPage />} />
-          */}
           
-          {/* Обработка несуществующих маршрутов (404) */}
           <Route 
             path="*" 
             element={
