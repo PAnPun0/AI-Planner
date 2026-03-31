@@ -1,307 +1,287 @@
-// src/api.js
-// =========================================================================
-// API ФУНКЦИИ-ЗАГЛУШКИ (MOCK FUNCTIONS)
-// Все функции возвращают Promise с моковыми данными через setTimeout
-// Для подключения реального бэкенда просто замените fetch-вызовы
-// =========================================================================
+const BASE_URL = 'http://localhost:8000';
 
-// =========================================================================
-// 1. АВТОРИЗАЦИЯ И АУТЕНТИФИКАЦИЯ
-// =========================================================================
-
-/**
- * Регистрация пользователя
- * @param {string} phone - Номер телефона
- * @param {string} password - Пароль
- * @returns {Promise<{success: boolean, token?: string, error?: string}>}
- */
-export async function registerUser(phone, password) {
-  try {
-    // РЕАЛЬНЫЙ ЗАПРОС (раскомментируйте для подключения бэкенда):
-    /*
-    const response = await fetch('http://localhost:8000/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password })
-    });
-    if (!response.ok) throw new Error('Registration failed');
-    const data = await response.json();
-    return { success: true, token: data.token };
-    */
-
-    // МОК-ФУНКЦИЯ с имитацией задержки
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // 90% успех, 10% ошибка
-        if (Math.random() < 0.9) {
-          resolve({
-            success: true,
-            token: `token_${Date.now()}`, // Имитация токена
-            message: 'Регистрация успешна!'
-          });
-        } else {
-          reject({
-            success: false,
-            error: 'Номер телефона уже зарегистрирован'
-          });
-        }
-      }, 1500); // Задержка 1.5 сек (имитация работы сервера)
-    });
-  } catch (error) {
-    console.error('Ошибка регистрации:', error);
-    throw { success: false, error: error.message || 'Ошибка при регистрации' };
-  }
-}
-
-/**
- * Вход пользователя
- * @param {string} phone - Номер телефона
- * @param {string} password - Пароль
- * @returns {Promise<{success: boolean, token?: string, error?: string}>}
- */
-export async function loginUser(phone, password) {
-  try {
-    // РЕАЛЬНЫЙ ЗАПРОС:
-    /*
-    const response = await fetch('http://localhost:8000/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password })
-    });
-    if (!response.ok) throw new Error('Login failed');
-    const data = await response.json();
-    return { success: true, token: data.token };
-    */
-
-    // МОК-ФУНКЦИЯ
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (Math.random() < 0.9) {
-          resolve({
-            success: true,
-            token: `token_${Date.now()}`,
-            message: 'Вход успешен!'
-          });
-        } else {
-          reject({
-            success: false,
-            error: 'Неверный номер телефона или пароль'
-          });
-        }
-      }, 1500);
-    });
-  } catch (error) {
-    console.error('Ошибка входа:', error);
-    throw { success: false, error: error.message || 'Ошибка при входе' };
-  }
-}
-
-// =========================================================================
-// 2. СОЗДАНИЕ И УПРАВЛЕНИЕ СОБЫТИЯМИ
-// =========================================================================
-
-/**
- * Отправка сообщения боту (чат)
- * @param {string} text - Текст сообщения
- * @param {Array} currentMessages - История сообщений
- * @returns {Promise<{text: string, buttons: Array, error?: string}>}
- */
-export async function sendMessageToBot(text, currentMessages = []) {
-  try {
-    // РЕАЛЬНЫЙ ЗАПРОС:
-    /*
-    const response = await fetch('http://localhost:8000/api/chat/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        message: text,
-        history: currentMessages,
-        eventId: localStorage.getItem('currentEventId')
-      })
-    });
-    if (!response.ok) throw new Error('Chat API error');
-    const data = await response.json();
-    // Ожидаемый ответ: { response: "Текст ответа", suggestedActions: [...] }
-    return {
-      text: data.response,
-      buttons: data.suggestedActions || [],
-      error: null
-    };
-    */
-
-    // МОК-ФУНКЦИЯ
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockResponses = {
-          'Что ты хочешь организовать?': {
-            text: 'Отлично! Я помогу тебе спланировать мероприятие. На следующем этапе нам нужно выбрать дату.',
-            buttons: ['Выбрать дату', 'Изменить тип']
-          },
-          'Я выбрал дату': {
-            text: 'Спасибо за информацию о дате! Теперь давайте определимся с местом проведения и гостями.',
-            buttons: ['Выбрать место', 'Указать гостей', 'Смета бюджета']
-          }
-        };
-
-        const defaultResponse = `Принято! Я проанализировал: "${text}". Информация сохранена в вашем профиле.`;
-        const response = mockResponses[text] || {
-          text: defaultResponse,
-          buttons: []
-        };
-
-        resolve({
-          text: response.text,
-          buttons: response.buttons,
-          error: null
-        });
-      }, 1500);
-    });
-  } catch (error) {
-    console.error('Ошибка отправки сообщения:', error);
-    return {
-      text: 'Упс, произошла ошибка связи с сервером. Попробуй позже.',
-      buttons: [],
-      error: error.message
-    };
-  }
-}
-
-/**
- * Сохранение даты события
- * @param {string} timeZone - Часовой пояс
- * @param {string} startDate - Дата начала (YYYY-MM-DD)
- * @param {string} startTime - Время начала (HH:MM)
- * @param {string} endDate - Дата окончания (YYYY-MM-DD)
- * @param {string} endTime - Время окончания (HH:MM)
- * @param {boolean} hasNoEndDate - Нет даты окончания
- * @returns {Promise<{success: boolean, eventId?: string, error?: string}>}
- */
-export async function saveEventDate(
-  timeZone,
-  startDate,
-  startTime,
-  endDate,
-  endTime,
-  hasNoEndDate
-) {
-  try {
-    // РЕАЛЬНЫЙ ЗАПРОС:
-    /*
-    const response = await fetch('http://localhost:8000/api/events/set-date', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({
-        timeZone,
-        startDate,
-        startTime,
-        endDate: hasNoEndDate ? null : endDate,
-        endTime: hasNoEndDate ? null : endTime
-      })
-    });
-    if (!response.ok) throw new Error('Date save failed');
-    const data = await response.json();
-    return { success: true, eventId: data.eventId };
-    */
-
-    // МОК-ФУНКЦИЯ
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          eventId: `event_${Date.now()}`,
-          savedData: {
-            timeZone,
-            startDate,
-            startTime,
-            endDate: hasNoEndDate ? null : endDate,
-            endTime: hasNoEndDate ? null : endTime
-          },
-          message: 'Дата события успешно сохранена!'
-        });
-      }, 1200);
-    });
-  } catch (error) {
-    console.error('Ошибка сохранения даты:', error);
-    throw { success: false, error: error.message || 'Ошибка при сохранении даты' };
-  }
-}
-
-/**
- * Получение списка событий пользователя
- * @returns {Promise<{events: Array, error?: string}>}
- */
-export async function getEvents() {
-  try {
-    // РЕАЛЬНЫЙ ЗАПРОС:
-    /*
-    const response = await fetch('http://localhost:8000/api/events', {
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (!response.ok) throw new Error('Fetch events failed');
-    const data = await response.json();
-    return { events: data.events };
-    */
-
-    // МОК-ФУНКЦИЯ
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          events: [
-            {
-              id: 1,
-              title: 'День рождения',
-              date: '2026-04-09',
-              description: 'Вечеринка в ресторане'
-            },
-            {
-              id: 2,
-              title: 'Свадьба',
-              date: '2026-05-15',
-              description: 'Церемония в загородном доме'
-            }
-          ],
-          error: null
-        });
-      }, 1000);
-    });
-  } catch (error) {
-    console.error('Ошибка получения событий:', error);
-    return { events: [], error: error.message };
-  }
-}
-
-// =========================================================================
-// СЛУЖЕБНЫЕ ФУНКЦИИ
-// =========================================================================
-
-/**
- * Сохранение токена в localStorage
- * @param {string} token - JWT токен
- */
-export function saveToken(token) {
-  if (token) {
-    localStorage.setItem('token', token);
-  }
-}
-
-/**
- * Извлечение токена из localStorage
- * @returns {string|null}
- */
-export function getToken() {
+function getToken() {
   return localStorage.getItem('token');
 }
 
+async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData.detail || errorData.message || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+
+  // 204 No Content
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+
+/** Запросить OTP на номер телефона */
+export async function requestOTP(phone) {
+  return apiFetch('/auth/request-otp', {
+    method: 'POST',
+    body: JSON.stringify({ phone }),
+  });
+}
+
 /**
- * Удаление токена (выход)
+ * Верифицировать OTP и получить JWT
+ * @returns {{ access_token, token_type, user_id, full_name }}
  */
+export async function verifyOTP(phone, code) {
+  return apiFetch('/auth/verify', {
+    method: 'POST',
+    body: JSON.stringify({ phone, code }),
+  });
+}
+
+// ─── TOKEN HELPERS ────────────────────────────────────────────────────────────
+
+export function saveToken(token) {
+  if (token) localStorage.setItem('token', token);
+}
+
 export function removeToken() {
   localStorage.removeItem('token');
+}
+
+export { getToken };
+
+// ─── USERS ───────────────────────────────────────────────────────────────────
+
+export async function getProfile() {
+  return apiFetch('/users/me');
+}
+
+export async function updateProfile(data) {
+  return apiFetch('/users/me', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getPreferences() {
+  return apiFetch('/users/me/preferences');
+}
+
+// ─── EVENTS ──────────────────────────────────────────────────────────────────
+
+export async function getEvents() {
+  return apiFetch('/events');
+}
+
+export async function getEvent(eventId) {
+  return apiFetch(`/events/${eventId}`);
+}
+
+export async function createEvent(data) {
+  return apiFetch('/events', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateEvent(eventId, data) {
+  return apiFetch(`/events/${eventId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteEvent(eventId) {
+  return apiFetch(`/events/${eventId}`, { method: 'DELETE' });
+}
+
+// ─── GUESTS ──────────────────────────────────────────────────────────────────
+
+export async function getGuests(eventId) {
+  return apiFetch(`/events/${eventId}/guests`);
+}
+
+/**
+ * Пригласить гостя
+ * @param {number} eventId
+ * @param {{ phone, full_name, role? }} data
+ */
+export async function inviteGuest(eventId, data) {
+  return apiFetch(`/events/${eventId}/guests`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Обновить статус гостя
+ * @param {number} eventId
+ * @param {number} userId
+ * @param {{ status }} data  — "invited" | "confirmed" | "declined" | "maybe"
+ */
+export async function updateGuestStatus(eventId, userId, data) {
+  return apiFetch(`/events/${eventId}/guests/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function removeGuest(eventId, userId) {
+  return apiFetch(`/events/${eventId}/guests/${userId}`, { method: 'DELETE' });
+}
+
+// ─── TASKS ───────────────────────────────────────────────────────────────────
+
+export async function getTasks(eventId) {
+  return apiFetch(`/tasks/event/${eventId}`);
+}
+
+/**
+ * Создать задачу
+ * @param {number} eventId
+ * @param {{ title, priority?, deadline?, category?, description? }} data
+ */
+export async function createTask(eventId, data) {
+  return apiFetch(`/tasks/${eventId}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Обновить статус задачи
+ * @param {number} taskId
+ * @param {string} status — "pending" | "in_progress" | "completed" | "overdue"
+ */
+export async function updateTaskStatus(taskId, status) {
+  return apiFetch(`/tasks/${taskId}?status=${status}`, { method: 'PATCH' });
+}
+
+export async function deleteTask(taskId) {
+  return apiFetch(`/tasks/${taskId}`, { method: 'DELETE' });
+}
+
+// ─── BUDGET ──────────────────────────────────────────────────────────────────
+
+export async function getBudget(eventId) {
+  return apiFetch(`/events/${eventId}/budget`);
+}
+
+/**
+ * Добавить позицию бюджета
+ * @param {number} eventId
+ * @param {{ category, description?, planned_amount, vendor? }} data
+ */
+export async function addBudgetItem(eventId, data) {
+  return apiFetch(`/events/${eventId}/budget`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Обновить позицию бюджета
+ * @param {number} itemId
+ * @param {{ paid?: boolean, actual_amount?: number }} params
+ */
+export async function updateBudgetItem(itemId, { paid, actual_amount } = {}) {
+  const query = new URLSearchParams();
+  if (paid !== undefined) query.set('paid', paid);
+  if (actual_amount !== undefined) query.set('actual_amount', actual_amount);
+  return apiFetch(`/budget/${itemId}?${query}`, { method: 'PATCH' });
+}
+
+export async function deleteBudgetItem(itemId) {
+  return apiFetch(`/budget/${itemId}`, { method: 'DELETE' });
+}
+
+// ─── TIMELINE ────────────────────────────────────────────────────────────────
+
+export async function getTimeline(eventId) {
+  return apiFetch(`/events/${eventId}/timeline`);
+}
+
+/**
+ * Добавить событие в таймлайн
+ * @param {number} eventId
+ * @param {{ time, activity, description?, location?, duration_minutes? }} data
+ */
+export async function addTimelineItem(eventId, data) {
+  return apiFetch(`/events/${eventId}/timeline`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateTimelineItem(eventId, itemId, data) {
+  return apiFetch(`/events/${eventId}/timeline/${itemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteTimelineItem(eventId, itemId) {
+  return apiFetch(`/events/${eventId}/timeline/${itemId}`, { method: 'DELETE' });
+}
+
+// ─── CHAT ────────────────────────────────────────────────────────────────────
+
+/**
+ * REST-альтернатива чата
+ * @param {number} userId
+ * @param {number} eventId
+ * @param {string} message
+ * @returns {{ message, suggested_actions, tasks_created }}
+ */
+export async function sendChatMessage(userId, eventId, message) {
+  return apiFetch(`/chat/message?user_id=${userId}&event_id=${eventId}`, {
+    method: 'POST',
+    body: JSON.stringify({ message }),
+  });
+}
+
+/**
+ * Обёртка для CreateEventPage — сохраняет старый интерфейс { text, buttons, error }
+ * userId и eventId берёт из localStorage
+ */
+export async function sendMessageToBot(message) {
+  const userId = localStorage.getItem('user_id');
+  const eventId = localStorage.getItem('current_event_id');
+  try {
+    const data = await sendChatMessage(userId, eventId, message);
+    return {
+      text: data.message,
+      buttons: data.suggested_actions || [],
+      error: null,
+    };
+  } catch (err) {
+    return {
+      text: 'Ошибка связи с сервером. Попробуйте позже.',
+      buttons: [],
+      error: err.message,
+    };
+  }
+}
+
+/**
+ * Создать WebSocket соединение с чат-агентом
+ * @param {number} userId
+ * @param {number} eventId
+ * @returns {WebSocket}
+ */
+export function createChatWebSocket(userId, eventId) {
+  const token = getToken();
+  const wsBase = BASE_URL.replace(/^http/, 'ws');
+  return new WebSocket(`${wsBase}/chat/${userId}/${eventId}?token=${token}`);
 }

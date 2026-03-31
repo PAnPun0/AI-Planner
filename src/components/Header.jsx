@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 export function Header({ title, progress = 0 }) {
   return (
-    <div className="w-full flex flex-col items-center py-6 mb-4 sticky top-0 z-10">
+    <div className="bg-[#FFFFFF] w-full flex flex-col items-center py-6 mb-4 sticky top-0 z-10">
       <h1 className="text-2xl font-medium text-slate-900 mb-6">{title}</h1>
       
       {/* Контейнер прогресс-бара */}
