@@ -1,18 +1,18 @@
 // src/components/ChatInput.jsx
 import { useState } from 'react';
 
-export function ChatInput({ onSendMessage }) {
+export function ChatInput({ onSendMessage, isLoading = false }) {
   const [inputValue, setInputValue] = useState('');
 
   const handleSend = () => {
-    if (inputValue.trim()) {
+    if (inputValue.trim() && !isLoading) {
       onSendMessage(inputValue);
       setInputValue(''); 
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSend();
+    if (e.key === 'Enter' && !isLoading) handleSend();
   };
 
   return (
@@ -23,13 +23,15 @@ export function ChatInput({ onSendMessage }) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Напишите" 
-          className="flex-1 bg-transparent outline-none px-4 py-2 text-slate-700 placeholder-slate-400"
+          placeholder={isLoading ? "Ждите ответа..." : "Напишите"} 
+          disabled={isLoading}
+          className="flex-1 bg-transparent outline-none px-4 py-2 text-slate-700 placeholder-slate-400 disabled:opacity-50"
         />
         {/* Кнопка отправки обновлена под дизайн */}
         <button 
           onClick={handleSend}
-          className="bg-[#6544FF] hover:bg-[#5233E8] transition-colors w-10 h-10 flex items-center justify-center rounded-lg text-white shrink-0"
+          disabled={isLoading}
+          className="bg-[#6544FF] hover:bg-[#5233E8] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors w-10 h-10 flex items-center justify-center rounded-lg text-white shrink-0"
         >
           {/* Иконка стрелки вправо */}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">

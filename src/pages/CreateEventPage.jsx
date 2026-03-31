@@ -5,9 +5,12 @@ import { BotMessage, UserMessage } from '../components/Message';
 import { ChatInput } from '../components/ChatInput';
 import { EventDateModal } from '../components/EventDateModal';
 import CreateEventBG from '../assets/CreateEventBG.png';
+import { sendMessageToBot } from '../api';
 
 export default function CreateEventPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Обновил начальный массив сообщений, чтобы он в точности повторял твой скриншот
@@ -34,7 +37,44 @@ export default function CreateEventPage() {
     const userMsg = { id: Date.now(), sender: 'user', text: text };
     setMessages((prev) =>[...prev, userMsg]);
     
-    // Здесь в будущем будет вызов твоего API (бэкенда)
+    // Отправляем сообщение в API и ожидаем ответ от бота
+    setLoading(true);
+    setError(null);
+    
+    sendMessageToBot(text, messages)
+      .then((response) => {
+        if (response.error) {
+          setError(response.error);
+          // Добавляем сообщение об ошибке от бота
+          setMessages((prev) => [...prev, {
+            id: Date.now() + 1,
+            sender: 'bot',
+            text: response.error,
+            isError: true
+          }]);
+        } else {
+          // Добавляем нормальный ответ от бота
+          setMessages((prev) => [...prev, {
+            id: Date.now() + 1,
+            sender: 'bot',
+            text: response.text,
+            buttons: response.buttons
+          }]);
+        }
+      })
+      .catch((err) => {
+        const errorMsg = err?.error || 'Произошла ошибка при отправке сообщения';
+        setError(errorMsg);
+        setMessages((prev) => [...prev, {
+          id: Date.now() + 1,
+          sender: 'bot',
+          text: errorMsg,
+          isError: true
+        }]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
@@ -83,7 +123,7 @@ export default function CreateEventPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        <ChatInput onSendMessage={handleUserMessage} />
+        <ChatInput onSendMessage={handleUserMessage} isLoading={loading} />
       </div>
       
       <EventDateModal 

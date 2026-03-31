@@ -1,15 +1,52 @@
 // src/pages/AuthPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import bgImage from '../assets/bigcircle.png'; 
+import bgImage from '../assets/bigcircle.png';
+import { loginUser, registerUser, saveToken } from '../api'; 
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault(); 
-    navigate('/create');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!phone.trim() || !password.trim()) {
+      setError('Заполните все поля');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      let result;
+      
+      if (isLogin) {
+        // Вход пользователя
+        result = await loginUser(phone, password);
+      } else {
+        // Регистрация пользователя
+        result = await registerUser(phone, password);
+      }
+
+      if (result.success && result.token) {
+        // Сохраняем токен и перенаправляем на страницу создания события
+        saveToken(result.token);
+        navigate('/create');
+      } else {
+        setError(result.error || 'Произошла ошибка');
+      }
+    } catch (err) {
+      const errorMsg = err?.error || 'Произошла ошибка. Попробуйте позже.';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,6 +62,13 @@ export default function AuthPage() {
           {isLogin ? 'Вход' : 'Регистрация'}
         </h2>
 
+        {/* Сообщение об ошибке */}
+        {error && (
+          <div className="mb-6 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           
           {/* Поле: Номер телефона */}
@@ -35,8 +79,11 @@ export default function AuthPage() {
             <input 
               type="tel" 
               required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={loading}
               placeholder="Номер" 
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6544FF] focus:ring-1 focus:ring-[#6544FF] transition-all placeholder-gray-400"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6544FF] focus:ring-1 focus:ring-[#6544FF] transition-all placeholder-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -48,8 +95,11 @@ export default function AuthPage() {
             <input 
               type="password" 
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
               placeholder="Пароль" 
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6544FF] focus:ring-1 focus:ring-[#6544FF] transition-all placeholder-gray-400"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6544FF] focus:ring-1 focus:ring-[#6544FF] transition-all placeholder-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -59,7 +109,8 @@ export default function AuthPage() {
               <input 
                 type="checkbox" 
                 required
-                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#6544FF] focus:ring-[#6544FF] cursor-pointer"
+                disabled={loading}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#6544FF] focus:ring-[#6544FF] cursor-pointer disabled:cursor-not-allowed"
               />
               <span className="text-xs text-gray-500 leading-tight">
                 Я даю согласие на использование{' '}
@@ -71,9 +122,10 @@ export default function AuthPage() {
           {/* Главная кнопка */}
           <button 
             type="submit"
-            className="w-full bg-[#6544FF] hover:bg-[#5233E8] text-white font-medium py-3.5 rounded-lg transition-colors shadow-sm mt-2"
+            disabled={loading}
+            className="w-full bg-[#6544FF] hover:bg-[#5233E8] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-lg transition-colors shadow-sm mt-2"
           >
-            {isLogin ? 'Войти' : 'Зарегистрироваться'}
+            {loading ? (isLogin ? 'Вход...' : 'Регистрация...') : (isLogin ? 'Войти' : 'Зарегистрироваться')}
           </button>
         </form>
 
@@ -82,8 +134,12 @@ export default function AuthPage() {
           {isLogin ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}{' '}
           <button 
             type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-[#6544FF] font-medium hover:underline outline-none"
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError(null);
+            }}
+            disabled={loading}
+            className="text-[#6544FF] font-medium hover:underline outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLogin ? 'Зарегистрироваться' : 'Войти'}
           </button>
@@ -99,7 +155,8 @@ export default function AuthPage() {
             {/* Кнопка Сбер ID */}
             <button 
               type="button"
-              className="flex-1 flex items-center justify-center border border-gray-400 hover:border-[#00A03E] hover:bg-green-50/50 rounded-full py-2.5 transition-colors"
+              disabled={loading}
+              className="flex-1 flex items-center justify-center border border-gray-400 hover:border-[#00A03E] hover:bg-green-50/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-full py-2.5 transition-colors"
             >
               <span className="text-[#00A03E] font-semibold text-sm">Сбер ID</span>
             </button>
@@ -107,7 +164,8 @@ export default function AuthPage() {
             {/* Кнопка Сбер Бизнес */}
             <button 
               type="button"
-              className="flex-1 flex items-center justify-center gap-2 border border-gray-400 hover:border-[#00A03E] hover:bg-green-50/50 rounded-full py-2.5 transition-colors"
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 border border-gray-400 hover:border-[#00A03E] hover:bg-green-50/50 disabled:opacity-50 disabled:cursor-not-allowed rounded-full py-2.5 transition-colors"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" stroke="#00A03E" strokeWidth="2"/>

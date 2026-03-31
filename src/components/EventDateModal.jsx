@@ -1,5 +1,6 @@
 // src/components/EventDateModal.jsx
 import { useState } from 'react';
+import { saveEventDate } from '../api';
 
 export function EventDateModal({ isOpen, onClose, onSave }) {
   // Состояния для хранения введенных данных
@@ -8,24 +9,50 @@ export function EventDateModal({ isOpen, onClose, onSave }) {
   const [startTime, setStartTime] = useState('12:00');
   const [endDate, setEndDate] = useState('2026-04-10');
   const [endTime, setEndTime] = useState('10:45');
-  const[hasNoEndDate, setHasNoEndDate] = useState(false);
+  const [hasNoEndDate, setHasNoEndDate] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Если окно закрыто, не рендерим ничего
   if (!isOpen) return null;
 
   // Функция для обработки кнопки "Сохранить"
-  const handleSave = () => {
-    // Формируем красивое текстовое сообщение для отправки ИИ-агенту
-    let message = `Я выбрал дату проведения.\nЧасовой пояс: ${timeZone}\nНачало: ${startDate} в ${startTime}`;
-    
-    if (hasNoEndDate) {
-      message += `\nМероприятие без четкого времени окончания.`;
-    } else {
-      message += `\nОкончание: ${endDate} в ${endTime}`;
-    }
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
 
-    onSave(message); // Передаем сообщение наверх
-    onClose();       // Закрываем окно
+    try {
+      // Сохраняем дату через API
+      const result = await saveEventDate(
+        timeZone,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        hasNoEndDate
+      );
+
+      if (result.success) {
+        // Формируем красивое текстовое сообщение для отправки в чат
+        let message = `Я выбрал дату проведения.\nЧасовой пояс: ${timeZone}\nНачало: ${startDate} в ${startTime}`;
+        
+        if (hasNoEndDate) {
+          message += `\nМероприятие без четкого времени окончания.`;
+        } else {
+          message += `\nОкончание: ${endDate} в ${endTime}`;
+        }
+
+        onSave(message);
+        onClose();
+      } else {
+        setError(result.error || 'Ошибка при сохранении даты');
+      }
+    } catch (err) {
+      const errorMsg = err?.error || 'Произошла ошибка при сохранении даты';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,12 +153,20 @@ export function EventDateModal({ isOpen, onClose, onSave }) {
           </div>
         </label>
 
+        {/* Сообщение об ошибке */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Кнопка сохранения */}
         <button 
           onClick={handleSave}
-          className="w-full bg-[#4038FF] hover:bg-[#322AC9] text-white font-medium py-3.5 rounded-xl transition-colors shadow-sm"
+          disabled={loading}
+          className="w-full bg-[#4038FF] hover:bg-[#322AC9] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-xl transition-colors shadow-sm"
         >
-          Сохранить изменения
+          {loading ? 'Сохранение...' : 'Сохранить изменения'}
         </button>
       </div>
     </div>
