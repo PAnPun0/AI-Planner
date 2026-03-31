@@ -8,6 +8,9 @@ import { TaskRow } from '../components/TaskRow';
 import { AIPanel } from '../components/AIPanel';
 import { EventDetails } from '../components/EventDetails';
 import { GuestList } from '../components/GuestList';
+import { Budget } from '../components/Budget'
+import { GuestChat } from '../components/GuestChat';
+import { MyEvents } from '../components/MyEvents';
 import { getEvents, getTasks } from '../api';
 
 const STATUS_MAP = {
@@ -22,6 +25,7 @@ export default function TasksDashboardPage() {
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [activeTab, setActiveTab] = useState('guests');
+  const [globalNav, setGlobalNav] = useState('events'); 
   const navigate = useNavigate();
 
   const userId = Number(localStorage.getItem('user_id'));
@@ -67,8 +71,8 @@ export default function TasksDashboardPage() {
 
   return (
     <div className="flex h-screen w-full bg-[#F8F9FB] font-sans overflow-hidden">
-      <Sidebar />
-
+      <Sidebar activeNav={globalNav} onNavChange={setGlobalNav} />
+      
       <div className="flex-1 flex flex-col overflow-hidden pt-6 relative">
         <div className="px-8 mb-4 shrink-0">
           <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
@@ -104,6 +108,10 @@ export default function TasksDashboardPage() {
           </div>
         ) : activeTab === 'guests' ? (
           <GuestList eventId={currentEvent?.id} />
+        ) : activeTab === 'budget' ? (
+          <Budget /> 
+        ) : activeTab === 'chat' ? (
+          <GuestChat /> 
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
             Раздел в разработке

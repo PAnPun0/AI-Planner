@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getGuests, inviteGuest, updateGuestStatus, removeGuest } from '../api';
 
+// EventGuest.status → русский лейбл
 const STATUS_LABEL = {
   invited: 'Неизвестно',
   confirmed: 'Идет',
@@ -8,6 +9,7 @@ const STATUS_LABEL = {
   maybe: 'Возможно',
 };
 
+// Русский лейбл → EventGuest.status
 const STATUS_API = {
   'Неизвестно': 'invited',
   'Идет': 'confirmed',
@@ -19,7 +21,7 @@ export function GuestList({ eventId }) {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [newGuest, setNewGuest] = useState({ full_name: '', phone: '' });
+  const [newGuest, setNewGuest] = useState({ full_name: '', phone: '', role: 'guest' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export function GuestList({ eventId }) {
     try {
       const created = await inviteGuest(eventId, newGuest);
       setGuests((prev) => [...prev, created]);
-      setNewGuest({ full_name: '', phone: '' });
+      setNewGuest({ full_name: '', phone: '', role: 'guest' });
       setIsAdding(false);
     } catch (err) {
       alert(err.message || 'Ошибка при добавлении гостя');
@@ -74,13 +76,16 @@ export function GuestList({ eventId }) {
       {/* Панель управления */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-4">
-          <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm">Все</button>
+          <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm">
+            Все ({guests.length})
+          </button>
           <div className="relative">
             <select className="appearance-none px-4 py-2 pr-8 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm outline-none cursor-pointer">
               <option>Статус</option>
               <option>Идет</option>
               <option>Не идет</option>
               <option>Возможно</option>
+              <option>Неизвестно</option>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#6544FF]">▼</div>
           </div>
@@ -125,6 +130,20 @@ export function GuestList({ eventId }) {
               className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#6544FF]"
             />
           </div>
+          <div className="w-32">
+            <label className="text-xs text-gray-500 mb-1 block">Роль</label>
+            <div className="relative">
+              <select
+                value={newGuest.role}
+                onChange={(e) => setNewGuest({ ...newGuest, role: e.target.value })}
+                className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#6544FF] pr-7"
+              >
+                <option value="guest">Гость</option>
+                <option value="helper">Помощник</option>
+              </select>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#6544FF] text-xs">▼</div>
+            </div>
+          </div>
           <button
             type="submit"
             disabled={saving}
@@ -144,8 +163,14 @@ export function GuestList({ eventId }) {
 
       {/* Таблица */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="grid grid-cols-[1fr_140px_120px_100px_40px] gap-4 px-6 py-4 bg-gray-50/50 border-b border-gray-200 text-xs font-medium text-gray-400">
-          <div>ФИО</div><div>Телефон</div><div>Статус</div><div>Роль</div><div />
+        {/* Шапка — поля EventGuest + User */}
+        <div className="grid grid-cols-[1fr_160px_130px_100px_160px_40px] gap-4 px-6 py-4 bg-gray-50/50 border-b border-gray-200 text-xs font-medium text-gray-400 uppercase">
+          <div>ФИО</div>
+          <div>Телефон</div>
+          <div>Статус</div>
+          <div>Роль</div>
+          <div>Приглашён</div>
+          <div />
         </div>
         <div className="flex flex-col">
           {loading ? (
@@ -156,11 +181,12 @@ export function GuestList({ eventId }) {
             guests.map((guest) => (
               <div
                 key={guest.user_id}
-                className="grid grid-cols-[1fr_140px_120px_100px_40px] gap-4 px-6 py-4 items-center border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
+                className="grid grid-cols-[1fr_160px_130px_100px_160px_40px] gap-4 px-6 py-4 items-center border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
               >
                 <div className="text-sm text-slate-800 font-medium">{guest.full_name}</div>
                 <div className="text-sm text-slate-500">{guest.phone}</div>
 
+                {/* Статус — обновляет через API */}
                 <div className="relative flex items-center">
                   <select
                     value={STATUS_LABEL[guest.status] ?? 'Неизвестно'}
@@ -175,7 +201,15 @@ export function GuestList({ eventId }) {
                   <div className="absolute right-0 pointer-events-none text-[#6544FF] text-xs">▼</div>
                 </div>
 
-                <div className="text-sm text-slate-500">{guest.role}</div>
+                <div className="text-sm text-slate-500">
+                  {guest.role === 'helper' ? 'Помощник' : 'Гость'}
+                </div>
+
+                <div className="text-xs text-gray-400">
+                  {guest.invited_at
+                    ? new Date(guest.invited_at).toLocaleDateString('ru-RU')
+                    : '—'}
+                </div>
 
                 <button
                   onClick={() => handleRemove(guest.user_id)}
