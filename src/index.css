@@ -1,0 +1,11 @@
+@font-face {
+    font-family: Gilroy;
+    src: url(".src/fonts/Gilroy.ttf");
+}
+
+
+@import "tailwindcss";
+
+@theme{
+    --font-Gilroy: Gilroy, "sans-serif";
+}
