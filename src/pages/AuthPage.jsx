@@ -41,6 +41,8 @@ export default function AuthPage() {
     try {
       const data = await verifyOTP(phone, code);
       saveToken(data.access_token);
+      localStorage.setItem('user_id', data.user_id);
+      localStorage.setItem('full_name', data.full_name);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Неверный код');
